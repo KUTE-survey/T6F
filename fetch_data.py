@@ -54,8 +54,15 @@ hum  = float(target['channel'][1]['value'])
 try:
     existing = json.load(open('data.json'))
     history  = existing.get('history', [])
+    # 今日の日付のデータだけ残す
+    today_str = now.strftime('%Y-%m-%d')
+    history = [h for h in history if h.get('date', today_str) == today_str]
 except:
     history = []
+
+# historyに日付情報を追加して保存
+history.append({'date': now.strftime('%Y-%m-%d'), 'time': now.strftime('%H:%M'), 'temp': temp, 'hum': hum})
+history = history[-24:]
 
 now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
 history.append({'time': now.strftime('%H:%M'), 'temp': temp, 'hum': hum})
