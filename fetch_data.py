@@ -33,7 +33,7 @@ except urllib.error.HTTPError as e:
     exit(1)
 
 # ★★★ 使いたい機器のシリアル番号をここだけ変える ★★★
-TARGET_SERIAL = 'E28400EC'
+TARGET_SERIAL = 'E28400AF'
 # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
 target = None
