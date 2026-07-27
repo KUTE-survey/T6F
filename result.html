@@ -173,17 +173,22 @@ fetch('./data.json')
     document.getElementById('updated-at').innerHTML =
       `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')} 時点のデータ`;
 
-    // 今日の日付を取得
-    const today = dt.toISOString().slice(0, 10);
+    // 日本時間で今日の日付を取得
+    const jstOffset = 9 * 60;
+    const jstNow = new Date(dt.getTime() + jstOffset * 60 * 1000);
+    const today = jstNow.toISOString().slice(0, 10);
 
-    // 今日のdateフィールドがあるデータだけ抽出
+    console.log('today:', today);
+    console.log('history:', d.history);
+
     const todayHistory = (d.history || []).filter(h => h.date === today);
+    console.log('todayHistory:', todayHistory);
 
     if (todayHistory.length === 0) {
+      console.log('本日のデータなし');
       return;
     }
 
-    // データを時刻付きの形式に変換（X軸にtime scaleを使用）
     const tempData = todayHistory.map(h => ({
       x: today + 'T' + h.time + ':00',
       y: h.temp
@@ -192,6 +197,8 @@ fetch('./data.json')
       x: today + 'T' + h.time + ':00',
       y: h.hum
     }));
+
+    console.log('tempData:', tempData);
 
     new Chart(document.getElementById('chart'), {
       type: 'line',
@@ -238,9 +245,7 @@ fetch('./data.json')
       }
     });
   })
-  .catch(() => {
+  .catch((err) => {
+    console.error('エラー:', err);
     document.getElementById('updated-at').textContent = 'センサーデータ読み込みエラー';
   });
-</script>
-</body>
-</html>
