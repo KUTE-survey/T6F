@@ -229,14 +229,14 @@ fetch('./data.json')
           {
             label:'室温', data: temps,
             borderColor:'#D85A30', backgroundColor:'rgba(216,90,48,0.08)',
-            fill:true, tension:0.4, pointRadius:3, yAxisID:'y',
+            fill:false, tension:0.4, pointRadius:3, yAxisID:'y',
             spanGaps: false,
             clip: false
           },
           {
             label:'湿度', data: hums,
             borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.08)',
-            fill:true, tension:0.4, pointRadius:3, borderDash:[5,3], yAxisID:'y2',
+            fill:false, tension:0.4, pointRadius:3, borderDash:[5,3], yAxisID:'y2',
             spanGaps: false,
             clip: false
           }
@@ -253,7 +253,6 @@ fetch('./data.json')
             ticks:{
               font:{size:11},
               stepSize: 2,
-              callback: val => val + '°'
             }
           },
           y2: {
@@ -264,7 +263,6 @@ fetch('./data.json')
             ticks:{
               font:{size:11},
               stepSize: 5,
-              callback: val => val + '%'
             }
           },
           x: {
