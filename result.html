@@ -45,7 +45,11 @@
     border-left: 4px solid #4caf50;
   }
   .energy-box .energy-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; color: #1b5e20; }
-  .chart-wrap { position:relative; width:100%; height:200px; margin-bottom:6px; }
+  .chart-wrap {
+    position:relative; width:100%; height:220px;
+    margin-bottom:6px;
+    overflow: visible;
+  }
   .chart-note { font-size:11px; color:#bbb; text-align:right; margin-bottom:20px; }
   .legend { display:flex; gap:16px; font-size:12px; color:#888; margin-bottom:12px; }
   .legend-dot { width:10px; height:10px; border-radius:2px; display:inline-block; margin-right:4px; }
@@ -156,14 +160,19 @@ function fetchGASData() {
 fetchGASData();
 setInterval(fetchGASData, 2 * 60 * 1000);
 
-// 30分ごとの固定ラベル（7:00〜22:00）
+// 30分ごとの固定ラベル（7:00〜21:00）
 const FIXED_LABELS = [
   '07:00','07:30','08:00','08:30','09:00','09:30',
   '10:00','10:30','11:00','11:30','12:00','12:30',
   '13:00','13:30','14:00','14:30','15:00','15:30',
   '16:00','16:30','17:00','17:30','18:00','18:30',
-  '19:00','19:30','20:00','20:30','21:00','21:30','22:00'
+  '19:00','19:30','20:00','20:30','21:00'
 ];
+
+// X軸に表示するラベル（2時間ごと）
+const X_DISPLAY = new Set([
+  '07:00','09:00','11:00','13:00','15:00','17:00','19:00','21:00'
+]);
 
 fetch('./data.json')
   .then(r => r.json())
@@ -192,8 +201,7 @@ fetch('./data.json')
     const todayHistory = (d.history || []).filter(h => h.date === today);
     if (todayHistory.length === 0) return;
 
-    // :00と:30のデータだけをtimeをキーにしたMapに変換
-    // 各固定ラベルに対して±3分以内のデータを対応させる
+    // ±3分以内のデータを固定ラベルにマッピング
     const historyMap = {};
     todayHistory.forEach(h => {
       const [hh, mm] = h.time.split(':').map(Number);
@@ -202,7 +210,6 @@ fetch('./data.json')
         const [lh, lm] = label.split(':').map(Number);
         const labelMin = lh * 60 + lm;
         const diff = Math.abs(totalMin - labelMin);
-        // ±3分以内で最も近いものを採用
         if (diff <= 3) {
           if (!historyMap[label] || diff < historyMap[label].diff) {
             historyMap[label] = { ...h, diff };
@@ -223,13 +230,15 @@ fetch('./data.json')
             label:'室温', data: temps,
             borderColor:'#D85A30', backgroundColor:'rgba(216,90,48,0.08)',
             fill:true, tension:0.4, pointRadius:3, yAxisID:'y',
-            spanGaps: false
+            spanGaps: false,
+            clip: false
           },
           {
             label:'湿度', data: hums,
             borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.08)',
             fill:true, tension:0.4, pointRadius:3, borderDash:[5,3], yAxisID:'y2',
-            spanGaps: false
+            spanGaps: false,
+            clip: false
           }
         ]
       },
@@ -237,13 +246,37 @@ fetch('./data.json')
         responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{ display:false } },
         scales:{
-          y:  { min:16, max:35,
-                title:{display:true, text:'温度(°C)', font:{size:11}},
-                grid:{color:'rgba(0,0,0,0.05)'}, ticks:{font:{size:11}} },
-          y2: { position:'right', min:30, max:80,
-                title:{display:true, text:'湿度(%)', font:{size:11}},
-                grid:{display:false}, ticks:{font:{size:11}} },
-          x:  { ticks:{font:{size:10}, autoSkip:true, maxTicksLimit:8, maxRotation:0} }
+          y: {
+            min: 18, max: 32,
+            title:{ display:true, text:'温度(°C)', font:{size:11} },
+            grid:{ color:'rgba(0,0,0,0.05)' },
+            ticks:{
+              font:{size:11},
+              stepSize: 2,
+              callback: val => val + '°'
+            }
+          },
+          y2: {
+            position:'right',
+            min: 30, max: 65,
+            title:{ display:true, text:'湿度(%)', font:{size:11} },
+            grid:{ display:false },
+            ticks:{
+              font:{size:11},
+              stepSize: 5,
+              callback: val => val + '%'
+            }
+          },
+          x: {
+            ticks:{
+              font:{size:11},
+              maxRotation:0,
+              callback: function(val, index) {
+                const label = FIXED_LABELS[index];
+                return X_DISPLAY.has(label) ? label : '';
+              }
+            }
+          }
         }
       }
     });
