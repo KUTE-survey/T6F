@@ -31,18 +31,18 @@
   .bar-fill { height:100%; border-radius:4px; transition: width 0.6s ease; }
   .dist-pct { font-size:13px; font-weight:600; width:34px; text-align:right; color:#333; flex-shrink:0; }
   .loading-msg { font-size:13px; color:#aaa; margin-bottom:16px; }
-  .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
-  .metric { background: #f5f4f0; border-radius: 12px; padding: 12px 8px; text-align: center; }
-  .metric .val { font-size: 22px; font-weight: 700; color: #1a1a1a; }
-  .metric .unit { font-size: 12px; color: #aaa; }
-  .metric .lbl { font-size: 11px; color: #aaa; margin-bottom: 4px; }
-  .badge-ok   { display:inline-block; font-size:11px; padding:2px 8px; border-radius:6px; margin-top:4px; background:#e6f4e6; color:#2e7d32; }
-  .badge-warn { display:inline-block; font-size:11px; padding:2px 8px; border-radius:6px; margin-top:4px; background:#fff3e0; color:#e65100; }
+  .metric-single {
+    background: #f5f4f0; border-radius: 12px;
+    padding: 16px; text-align: center; margin-bottom: 20px;
+  }
+  .metric-single .val { font-size: 36px; font-weight: 700; color: #1a1a1a; }
+  .metric-single .unit { font-size: 16px; color: #aaa; }
+  .metric-single .lbl { font-size: 12px; color: #aaa; margin-bottom: 6px; }
+  .badge-ok   { display:inline-block; font-size:12px; padding:3px 10px; border-radius:6px; margin-top:6px; background:#e6f4e6; color:#2e7d32; }
+  .badge-warn { display:inline-block; font-size:12px; padding:3px 10px; border-radius:6px; margin-top:6px; background:#fff3e0; color:#e65100; }
   .comfort-row { display:flex; gap:16px; flex-wrap:wrap; background:#f5f4f0; border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:#555; }
-  .chart-wrap { position:relative; width:100%; height:220px; margin-bottom:6px; overflow:visible; }
+  .chart-wrap { position:relative; width:100%; height:200px; margin-bottom:6px; overflow:visible; }
   .chart-note { font-size:11px; color:#bbb; text-align:right; margin-bottom:8px; }
-  .legend { display:flex; gap:16px; font-size:12px; color:#888; margin-bottom:12px; }
-  .legend-dot { width:10px; height:10px; border-radius:2px; display:inline-block; margin-right:4px; }
   .error-msg { font-size:12px; color:#e65100; margin-bottom:8px; }
 </style>
 </head>
@@ -52,36 +52,26 @@
   <h1>現在の室内環境</h1>
   <p class="updated" id="updated-at">取得中…</p>
 
+  <!-- みんなの感じ方 -->
   <div class="section-label">みんなの感じ方（<span id="total-count">取得中</span>件中）</div>
   <div id="dist-bars" style="margin-bottom:20px;">
     <div class="loading-msg">回答データを読み込み中…</div>
   </div>
 
-  <div class="metrics">
-    <div class="metric">
-      <div class="lbl">室温</div>
-      <div class="val" id="m-temp">--<span class="unit">°C</span></div>
-      <span class="badge-ok" id="b-temp">取得中</span>
-    </div>
-    <div class="metric">
-      <div class="lbl">湿度</div>
-      <div class="val" id="m-hum">--<span class="unit">%</span></div>
-      <span class="badge-ok" id="b-hum">取得中</span>
-    </div>
+  <!-- 室温のみ -->
+  <div class="metric-single">
+    <div class="lbl">室温</div>
+    <div class="val" id="m-temp">--<span class="unit">°C</span></div>
+    <span class="badge-ok" id="b-temp">取得中</span>
   </div>
 
   <div class="comfort-row">
     <span>🌡 快適域：<strong>24〜27°C</strong></span>
-    <span>💧 快適域：<strong>45〜60%</strong></span>
   </div>
 
-  <div class="legend">
-    <span><span class="legend-dot" style="background:#D85A30"></span>室温 (°C・左軸)</span>
-    <span><span class="legend-dot" style="background:#378ADD;"></span>湿度 (%・右軸)</span>
-  </div>
-
+  <!-- 室温グラフ -->
   <div class="chart-wrap">
-    <canvas id="chart" role="img" aria-label="本日の室温と湿度の時間推移"></canvas>
+    <canvas id="chart" role="img" aria-label="本日の室温の時間推移"></canvas>
   </div>
   <p class="chart-note">※ 毎時0分・30分の瞬時値を折れ線グラフで表示しています</p>
 </div>
@@ -89,7 +79,7 @@
 <script>
 // ★場所ごとに変更するURL★
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwLEkj5j6WcDVW5uivr_JdriEOrQtKQfTGNcldIc43fG4kSrNXO5ltBuNcGZ3LX8MfqYQ/exec';
- 
+
 const OPTS = [
   { v:5, icon:'🥵', label:'とても暑い', formLabel:'とても暑い（汗ばむほど暑い）' },
   { v:4, icon:'😓', label:'やや暑い',   formLabel:'やや暑い（少し暑さを感じる）' },
@@ -140,9 +130,11 @@ function fetchGASData() {
   document.head.appendChild(script);
 }
 
+// GASとdata.jsonを並列で取得
 fetchGASData();
 setInterval(fetchGASData, 2 * 60 * 1000);
 
+// 30分ごとの全ラベル（7:00〜22:00）
 const ALL_LABELS = [
   '07:00','07:30','08:00','08:30','09:00','09:30',
   '10:00','10:30','11:00','11:30','12:00','12:30',
@@ -160,28 +152,28 @@ const GRID_LABELS = new Set([
 fetch('./data.json')
   .then(r => r.json())
   .then(d => {
+    // 室温表示
     document.getElementById('m-temp').innerHTML =
-      d.temperature + '<span style="font-size:12px;color:#aaa">°C</span>';
-    document.getElementById('m-hum').innerHTML  =
-      d.humidity    + '<span style="font-size:12px;color:#aaa">%</span>';
+      d.temperature + '<span style="font-size:16px;color:#aaa">°C</span>';
 
     const tempOk = d.temperature >= 24 && d.temperature <= 27;
-    const humOk  = d.humidity    >= 45 && d.humidity    <= 60;
     const b = (ok, okTxt, ngTxt) =>
       `<span class="${ok ? 'badge-ok' : 'badge-warn'}">${ok ? okTxt : ngTxt}</span>`;
     document.getElementById('b-temp').outerHTML = b(tempOk, '快適域内', '範囲外');
-    document.getElementById('b-hum').outerHTML  = b(humOk,  '快適域内', '範囲外');
 
     const dt = new Date(d.updated_at);
     document.getElementById('updated-at').innerHTML =
       `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')} 時点のデータ`;
 
+    // 日本時間で今日の日付を取得
     const jstNow = new Date(dt.getTime() + 9 * 60 * 60 * 1000);
     const today = jstNow.toISOString().slice(0, 10);
 
+    // 今日のデータだけ抽出
     const todayHistory = (d.history || []).filter(h => h.date === today);
     if (todayHistory.length === 0) return;
 
+    // ±3分以内のデータを固定ラベルにマッピング
     const historyMap = {};
     todayHistory.forEach(h => {
       const [hh, mm] = h.time.split(':').map(Number);
@@ -199,26 +191,22 @@ fetch('./data.json')
     });
 
     const temps = ALL_LABELS.map(l => historyMap[l] ? historyMap[l].temp : null);
-    const hums  = ALL_LABELS.map(l => historyMap[l] ? historyMap[l].hum  : null);
 
     new Chart(document.getElementById('chart'), {
       type: 'line',
       data: {
         labels: ALL_LABELS,
-        datasets: [
-          {
-            label:'室温', data: temps,
-            borderColor:'#D85A30', backgroundColor:'transparent',
-            fill: false, tension:0.4, pointRadius:3, yAxisID:'y',
-            spanGaps: false, clip: false
-          },
-          {
-            label:'湿度', data: hums,
-            borderColor:'#378ADD', backgroundColor:'transparent',
-            fill: false, tension:0.4, pointRadius:3, borderDash:[5,3], yAxisID:'y2',
-            spanGaps: false, clip: false
-          }
-        ]
+        datasets: [{
+          label:'室温',
+          data: temps,
+          borderColor:'#D85A30',
+          backgroundColor:'transparent',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 3,
+          spanGaps: false,
+          clip: false
+        }]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
@@ -229,13 +217,6 @@ fetch('./data.json')
             title:{ display:true, text:'温度(°C)', font:{size:11} },
             grid:{ color:'rgba(0,0,0,0.05)' },
             ticks:{ font:{size:11}, stepSize:2 }
-          },
-          y2: {
-            position:'right',
-            min: 30, max: 65,
-            title:{ display:true, text:'湿度(%)', font:{size:11} },
-            grid:{ display:false },
-            ticks:{ font:{size:11}, stepSize:5 }
           },
           x: {
             grid:{
