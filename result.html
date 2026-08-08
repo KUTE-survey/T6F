@@ -39,14 +39,8 @@
   .badge-ok   { display:inline-block; font-size:11px; padding:2px 8px; border-radius:6px; margin-top:4px; background:#e6f4e6; color:#2e7d32; }
   .badge-warn { display:inline-block; font-size:11px; padding:2px 8px; border-radius:6px; margin-top:4px; background:#fff3e0; color:#e65100; }
   .comfort-row { display:flex; gap:16px; flex-wrap:wrap; background:#f5f4f0; border-radius:12px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:#555; }
-  .energy-box {
-    background: #f0faf0; border-radius: 12px; padding: 14px 16px;
-    margin-bottom: 20px; font-size: 13px; color: #2e5e2e; line-height: 1.8;
-    border-left: 4px solid #4caf50;
-  }
-  .energy-box .energy-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; color: #1b5e20; }
   .chart-wrap { position:relative; width:100%; height:220px; margin-bottom:6px; overflow:visible; }
-  .chart-note { font-size:11px; color:#bbb; text-align:right; margin-bottom:20px; }
+  .chart-note { font-size:11px; color:#bbb; text-align:right; margin-bottom:8px; }
   .legend { display:flex; gap:16px; font-size:12px; color:#888; margin-bottom:12px; }
   .legend-dot { width:10px; height:10px; border-radius:2px; display:inline-block; margin-right:4px; }
   .error-msg { font-size:12px; color:#e65100; margin-bottom:8px; }
@@ -81,13 +75,6 @@
     <span>💧 快適域：<strong>45〜60%</strong></span>
   </div>
 
-  <div class="energy-box">
-    <div class="energy-title">💡 空調の省エネ豆知識</div>
-    冷房の設定温度を <strong>1°C 上げる</strong>と、空調の消費電力を約 <strong>10%</strong> 削減できます。<br>
-    一般家庭（6畳エアコン）で夏の1か月あたり約 <strong>372円</strong> の節約に相当します。<br>
-    <span style="font-size:11px; color:#4a7a4a;">※ 省エネルギーセンター基準。500W×8h×30日×31円/kWh×10%で算出。</span>
-  </div>
-
   <div class="legend">
     <span><span class="legend-dot" style="background:#D85A30"></span>室温 (°C・左軸)</span>
     <span><span class="legend-dot" style="background:#378ADD;"></span>湿度 (%・右軸)</span>
@@ -102,7 +89,7 @@
 <script>
 // ★場所ごとに変更するURL★
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwLEkj5j6WcDVW5uivr_JdriEOrQtKQfTGNcldIc43fG4kSrNXO5ltBuNcGZ3LX8MfqYQ/exec';
-
+ 
 const OPTS = [
   { v:5, icon:'🥵', label:'とても暑い', formLabel:'とても暑い（汗ばむほど暑い）' },
   { v:4, icon:'😓', label:'やや暑い',   formLabel:'やや暑い（少し暑さを感じる）' },
@@ -156,7 +143,6 @@ function fetchGASData() {
 fetchGASData();
 setInterval(fetchGASData, 2 * 60 * 1000);
 
-// 30分ごとの全ラベル（7:00〜22:00）- データのマッピングに使用
 const ALL_LABELS = [
   '07:00','07:30','08:00','08:30','09:00','09:30',
   '10:00','10:30','11:00','11:30','12:00','12:30',
@@ -165,10 +151,7 @@ const ALL_LABELS = [
   '19:00','19:30','20:00','20:30','21:00','21:30','22:00'
 ];
 
-// X軸に表示するラベル（3時間ごと）
 const TICK_LABELS = new Set(['07:00','10:00','13:00','16:00','19:00','22:00']);
-
-// グリッド線を引く位置（1時間ごと）
 const GRID_LABELS = new Set([
   '07:00','08:00','09:00','10:00','11:00','12:00','13:00',
   '14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'
@@ -193,15 +176,12 @@ fetch('./data.json')
     document.getElementById('updated-at').innerHTML =
       `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')} 時点のデータ`;
 
-    // 日本時間で今日の日付を取得
     const jstNow = new Date(dt.getTime() + 9 * 60 * 60 * 1000);
     const today = jstNow.toISOString().slice(0, 10);
 
-    // 今日のデータだけ抽出
     const todayHistory = (d.history || []).filter(h => h.date === today);
     if (todayHistory.length === 0) return;
 
-    // ±3分以内のデータを固定ラベルにマッピング
     const historyMap = {};
     todayHistory.forEach(h => {
       const [hh, mm] = h.time.split(':').map(Number);
@@ -259,7 +239,6 @@ fetch('./data.json')
           },
           x: {
             grid:{
-              // グリッド線は1時間ごとのラベル位置のみ表示
               color: function(ctx) {
                 const label = ALL_LABELS[ctx.index];
                 return GRID_LABELS.has(label) ? 'rgba(0,0,0,0.06)' : 'transparent';
@@ -269,7 +248,6 @@ fetch('./data.json')
             ticks:{
               font:{size:11},
               maxRotation:0,
-              // ラベルは3時間ごとのみ表示
               callback: function(val, index) {
                 const label = ALL_LABELS[index];
                 return TICK_LABELS.has(label) ? label : '';
