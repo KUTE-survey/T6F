@@ -48,39 +48,39 @@ if target is None:
 
 print('使用機器:', target.get('name'), target.get('serial'))
 
-try:
-    temp = float(target['channel'][0]['value'])
-    hum  = float(target['channel'][1]['value'])
-except (ValueError, TypeError):
-    print('Communication Errorのため終了します')
-    exit(0)
-
-# nowをここで定義
+# nowをAPIアクセス成功後に定義（エラー時はここに到達しない）
 now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
 today_str = now.strftime('%Y-%m-%d')
 
 try:
-    existing = json.load(open('data.json'))
-    history  = existing.get('history', [])
-    history = [h for h in history if h.get('date', today_str) == today_str]
-except:
+    temp = float(target['channel'][0]['value'])
+except (ValueError, TypeError):
+    print('温度のCommunication Errorのため前回の値を維持します')
+    exit(0)
+
+# 既存のdata.jsonを読み込んでhistoryを引き継ぐ
+try:
+    with open('data.json') as f:
+        existing = json.load(f)
+    history = existing.get('history', [])
+    # 今日のデータだけ残す（日付フィールドがないものは除外）
+    history = [h for h in history if h.get('date') == today_str]
+except Exception:
     history = []
 
 history.append({
     'date': today_str,
     'time': now.strftime('%H:%M'),
     'temp': temp,
-    'hum':  hum
 })
-history = history[-96:]  # 最大96件（30分おき×2日分）
+history = history[-96:]  # 最大96件（30分おき×2日分の余裕）
 
 out = {
-    'temperature':     temp,
-    'humidity':        hum,
-    'set_temperature': 28,
-    'updated_at':      now.isoformat(),
-    'history':         history
+    'temperature': temp,
+    'updated_at':  now.isoformat(),
+    'history':     history
 }
 
-json.dump(out, open('data.json', 'w'), ensure_ascii=False, indent=2)
-print('完了:', temp, hum)
+with open('data.json', 'w') as f:
+    json.dump(out, f, ensure_ascii=False, indent=2)
+print('完了:', temp)
