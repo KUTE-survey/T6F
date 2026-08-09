@@ -73,7 +73,7 @@ history.append({
     'time': now.strftime('%H:%M'),
     'temp': temp,
 })
-history = history[-96:]  # 最大96件（30分おき×2日分の余裕）
+history = history[-300:]  # 最大300件（1日分＋余裕）
 
 out = {
     'temperature': temp,
