@@ -49,7 +49,7 @@ if target is None:
 
 print('使用機器:', target.get('name'), target.get('serial'))
 
-# センサーの最終通信時刻を確認（古いデータの書き込みを防ぐ）
+# センサーの最終通信時刻を確認（record_timeがある機器のみ）
 record_time = target.get('record_time')
 if record_time:
     sensor_time = datetime.datetime.fromtimestamp(
@@ -63,7 +63,7 @@ if record_time:
         print(f'最終通信が{diff_minutes:.0f}分前のため書き込みをスキップします')
         exit(0)
 else:
-    print('record_timeが取得できません（チェックをスキップ）')
+    print('record_timeが取得できません（時刻チェックをスキップ）')
 
 try:
     temp = float(target['channel'][0]['value'])
@@ -80,8 +80,14 @@ try:
     with open('data.json') as f:
         existing = json.load(f)
     history = existing.get('history', [])
-    # 今日のデータだけ残す（dateフィールドがないものは除外）
+    # 今日のデータだけ残す
     history = [h for h in history if h.get('date') == today_str]
+    # 直近10件がすべて同じ温度なら書き込みをスキップ（センサー通信不良対策）
+    if len(history) >= 10:
+        last_10_temps = [h['temp'] for h in history[-10:]]
+        if len(set(last_10_temps)) == 1 and last_10_temps[0] == temp:
+            print(f'直近10件すべて{temp}℃で変化なし。センサー通信不良の可能性があるためスキップします')
+            exit(0)
 except Exception:
     history = []
 
