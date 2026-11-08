@@ -212,13 +212,13 @@ fetch('./data.json?t=' + Date.now())
         plugins:{ legend:{ display:true, position:'top', labels:{ boxWidth:12, font:{size:11} } } },
         scales:{
           y: {
-            position:'left', min:14, max:30,
+            position:'left', min:16, max:26,
             title:{ display:true, text:'温度（℃）', font:{size:11}, color:'#D85A30' },
             grid:{ color:'rgba(0,0,0,0.05)' },
             ticks:{ font:{size:11}, stepSize:2, color:'#D85A30' }
           },
           y2: {
-            position:'right', min:10, max:90,
+            position:'right', min:20, max:70,
             title:{ display:true, text:'湿度（％）', font:{size:11}, color:'#378ADD' },
             grid:{ drawOnChartArea:false },
             ticks:{ font:{size:11}, stepSize:10, color:'#378ADD' }
